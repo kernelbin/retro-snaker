@@ -21,6 +21,8 @@ HBRUSH DefBrush;
 HPEN DefPen;
 LOGFONT FontForm;
 
+HBRUSH BrickBrush;
+
 
 
 //Window Proc
@@ -38,7 +40,7 @@ BOOL bQuitMsgBox;
 
 
 //About the gam
-int Block[128][128] = { 0 };
+int Block[128][128] = { 0 };//0 empty   1 brick   2 snake   3 head   4 food
 EZWND BlkWnd[128][128] = { 0 };
 int BlkNum;
 
@@ -103,7 +105,16 @@ EZWNDPROC GameProc(EZWND ezWnd, int message, WPARAM wParam, LPARAM lParam)
 		BlkNum = 16;
 		for (int py = 0; py < BlkNum; py++)
 			for (int px = 0; px < BlkNum; px++)
+			{
 				BlkWnd[py][px] = CreateEZWindow(ezWnd, 0, 0, 0, 0, BlockProc);
+				BlkWnd[py][px]->ezID = py * BlkNum + px;
+			}
+		
+
+		//Temporary map
+		for (int y = 0; y < BlkNum; y++)
+			Block[y][0] = 1;
+
 		return 0;
 	case EZWM_DRAW:
 		SelectObject(wParam, DefBrush);
@@ -113,24 +124,32 @@ EZWNDPROC GameProc(EZWND ezWnd, int message, WPARAM wParam, LPARAM lParam)
 	case EZWM_SIZE:
 		//calculate zhe size of each block
 	{
-		
+		int blocklen;
 		if (ezWnd->Width > ezWnd->Height)
 		{
-			xpos = (ezWnd->Width - ezWnd->Height) / 2 + 5;
-			ypos = 5;
-			tlen = ezWnd->Height - 10;
+			blocklen = (ezWnd->Height - 10) / BlkNum;//length per block
+			tlen = blocklen * BlkNum;
+
+			xpos = (ezWnd->Width - tlen) / 2;
+			ypos = (ezWnd->Height - tlen) / 2;
 		}
 		else
 		{
-			xpos = 5;
-			ypos = (ezWnd->Height - ezWnd->Width) / 2 + 5;
-			tlen = ezWnd->Width - 10;
+			blocklen = (ezWnd->Width - 10) / BlkNum;//length per block
+			tlen = blocklen * BlkNum;
+
+			xpos = (ezWnd->Width - tlen) / 2;
+			ypos = (ezWnd->Height - tlen) / 2;
 		}
 		//move child windows
 
 		for (int py = 0; py < BlkNum; py++)
 			for (int px = 0; px < BlkNum; px++)
-				MoveEZWindow(BlkWnd[px][py], xpos + px * tlen / BlkNum, ypos + py * tlen / BlkNum, tlen / BlkNum, tlen / BlkNum, 0);
+				MoveEZWindow(BlkWnd[py][px],
+					xpos + px * blocklen,
+					ypos + py * blocklen,
+					blocklen,
+					blocklen, 0);
 		return 0;
 	}
 		
@@ -141,12 +160,38 @@ EZWNDPROC GameProc(EZWND ezWnd, int message, WPARAM wParam, LPARAM lParam)
 
 EZWNDPROC ControlPanelProc(EZWND ezWnd, int message, WPARAM wParam, LPARAM lParam)
 {
+	static EZWND StartBtn, PauseBtn, EndBtn;
 	switch (message)
 	{
 	case EZWM_CREATE:
+		FontForm.lfHeight = 22;
+		StartBtn = CreateEZStyleWindow(ezWnd, TEXT("Start Game"), EZS_CHILD | EZS_BUTTON | EZBS_PUSHBUTTON, 0, 0, 0, 0);
+		EZSendMessage(StartBtn, EZWM_SETFONT, 0, &FontForm);
+		EZSendMessage(StartBtn, EZWM_SETCOLOR, RGB(0, 0, 0), RGB(0, 0, 0));
+		PauseBtn = CreateEZStyleWindow(ezWnd, TEXT("Pause"), EZS_CHILD | EZS_BUTTON | EZBS_PUSHBUTTON, 0, 0, 0, 0);
+		EZSendMessage(PauseBtn, EZWM_SETFONT, 0, &FontForm);
+		EZSendMessage(PauseBtn, EZWM_SETCOLOR, RGB(0, 0, 0), RGB(0, 0, 0));
+		EndBtn = CreateEZStyleWindow(ezWnd, TEXT("End Game"), EZS_CHILD | EZS_BUTTON | EZBS_PUSHBUTTON, 0, 0, 0, 0);
+		EZSendMessage(EndBtn, EZWM_SETFONT, 0, &FontForm);
+		EZSendMessage(EndBtn, EZWM_SETCOLOR, RGB(0, 0, 0), RGB(0, 0, 0));
+		return 0;
+	case EZWM_COMMAND:
+		if (lParam == StartBtn)
+		{
+		}
+		else if (lParam == PauseBtn)
+		{
+		}
+		else if (lParam == EndBtn)
+		{
+		}
 
 		return 0;
-	
+	case EZWM_SIZE:
+		MoveEZWindow(StartBtn, (ezWnd->Width - 100) / 2, 40 , 120, 49, 0);
+		MoveEZWindow(PauseBtn, (ezWnd->Width - 100) / 2, 110, 120, 49, 0);
+		MoveEZWindow(EndBtn  , (ezWnd->Width - 100) / 2, 180, 120, 49, 0);
+		return 0;
 	}
 	return 0;
 }
@@ -195,10 +240,22 @@ EZWNDPROC QuitMessageBox(EZWND ezWnd, int message, WPARAM wParam, LPARAM lParam)
 
 EZWNDPROC BlockProc(EZWND ezWnd, int message, WPARAM wParam, LPARAM lParam)
 {
+	int px, py;
+	py = ezWnd->ezID / BlkNum;
+	px = ezWnd->ezID % BlkNum;
 	switch (message)
 	{
 	case EZWM_DRAW:
-		PatBlt(wParam, 0, 0, ezWnd->Width, ezWnd->Height, BLACKNESS);
+		switch (Block[py][px])
+		{
+		case 0:
+			//empty
+			break;
+		case 1:
+			//brick
+			PaintBrick(wParam, ezWnd->Width, ezWnd->Height);
+			break;
+		}
 		return 0;
 	}
 	return 0;
@@ -240,3 +297,17 @@ int GDIObjClean()
 	}
 	return 0;
 }
+
+
+
+int PaintBrick(HDC hdc, int x, int y)
+{
+	HBRUSH hBrush = CreateSolidBrush(RGB(64, 64, 64));
+	SelectObject(hdc, hBrush);
+
+	PatBlt(hdc, 0, 0, x, y, PATCOPY);
+
+	DeleteObject(hBrush);
+	return 0;
+}
+
