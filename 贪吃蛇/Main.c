@@ -1,58 +1,7 @@
 #include<Windows.h>
 #include"EasyWindow.h"
+#include"Global.h"
 
-
-//Program Name
-#define szAppName TEXT("Snake")
-
-
-//Windows
-EZWND MainWnd;
-EZWND GameWnd;
-EZWND ControlWnd;
-
-
-//Default Color
-#define DefColor RGB(137,186,4)
-
-
-//GDI Object
-HBRUSH DefBrush;
-HPEN DefPen;
-LOGFONT FontForm;
-
-HBRUSH BrickBrush;
-
-
-
-//Window Proc
-EZWNDPROC MainProc(EZWND ezWnd, int message, WPARAM wParam, LPARAM lParam);
-EZWNDPROC ControlPanelProc(EZWND ezWnd, int message, WPARAM wParam, LPARAM lParam);
-EZWNDPROC GameProc(EZWND ezWnd, int message, WPARAM wParam, LPARAM lParam);
-EZWNDPROC QuitMessageBox(EZWND ezWnd, int message, WPARAM wParam, LPARAM lParam);
-
-EZWNDPROC BlockProc(EZWND ezWnd, int message, WPARAM wParam, LPARAM lParam);
-
-
-//Global Vars
-BOOL bQuitMsgBox;
-
-
-
-//About the gam
-int Block[128][128] = { 0 };//0 empty   1 brick   2 snake   3 head   4 food
-EZWND BlkWnd[128][128] = { 0 };
-int BlkNum;
-
-typedef struct __NodeSnake SNAKE, *pSNAKE;
-typedef struct __NodeSnake
-{
-	int x, y;
-	pSNAKE n;//Next
-}SNAKE, *pSNAKE;
-
-
-pSNAKE Head;//Snake Head
 
 
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int iCmdShow)
@@ -72,6 +21,8 @@ EZWNDPROC MainProc(EZWND ezWnd, int message, WPARAM wParam, LPARAM lParam)
 	{
 	case EZWM_CREATE:
 		GDIObjInit();
+		memset(Block, 0, sizeof(Block));
+		memset(BlkWnd, 0, sizeof(BlkWnd));
 		bQuitMsgBox = FALSE;
 		GameWnd = CreateEZWindow(ezWnd, 0, 0, 0, 0, GameProc);
 		ControlWnd = CreateEZWindow(ezWnd, 0, 0, 0, 0, ControlPanelProc);
@@ -99,27 +50,48 @@ EZWNDPROC MainProc(EZWND ezWnd, int message, WPARAM wParam, LPARAM lParam)
 EZWNDPROC GameProc(EZWND ezWnd, int message, WPARAM wParam, LPARAM lParam)
 {
 	static int xpos, ypos, tlen;
+	static int TimerID;
 	switch (message)
 	{
 	case EZWM_CREATE:
-		BlkNum = 16;
+		BlkNum = 20;
 		for (int py = 0; py < BlkNum; py++)
 			for (int px = 0; px < BlkNum; px++)
 			{
 				BlkWnd[py][px] = CreateEZWindow(ezWnd, 0, 0, 0, 0, BlockProc);
 				BlkWnd[py][px]->ezID = py * BlkNum + px;
 			}
-		
 
-		//Temporary map
-		for (int y = 0; y < BlkNum; y++)
-			Block[y][0] = 1;
-
+		TimerID = -1;
 		return 0;
 	case EZWM_DRAW:
 		SelectObject(wParam, DefBrush);
 		PatBlt(wParam, 0, 0, ezWnd->Width, ezWnd->Height, PATCOPY);
 		PatBlt(wParam, xpos, ypos, tlen, tlen, WHITENESS);
+		return 0;
+
+	case EZWM_USER_NOTIFY:
+		switch (wParam)
+		{
+		case 1:
+			GameStart();
+			TimerID = SetEZTimer(ezWnd, 1000);
+			break;
+		case 2:
+			//GamePause / Resume
+
+			break;
+		case 3:
+			//GameEnd
+			KillEZTimer(ezWnd, TimerID);
+			TimerID = -1;
+			break;
+		}
+		EZRepaint(ezWnd, 0);
+		return 0;
+	case EZWM_TIMER:
+		GameTimer();
+		EZRepaint(ezWnd, 0);
 		return 0;
 	case EZWM_SIZE:
 		//calculate zhe size of each block
@@ -129,27 +101,22 @@ EZWNDPROC GameProc(EZWND ezWnd, int message, WPARAM wParam, LPARAM lParam)
 		{
 			blocklen = (ezWnd->Height - 10) / BlkNum;//length per block
 			tlen = blocklen * BlkNum;
-
-			xpos = (ezWnd->Width - tlen) / 2;
-			ypos = (ezWnd->Height - tlen) / 2;
 		}
 		else
 		{
 			blocklen = (ezWnd->Width - 10) / BlkNum;//length per block
 			tlen = blocklen * BlkNum;
-
-			xpos = (ezWnd->Width - tlen) / 2;
-			ypos = (ezWnd->Height - tlen) / 2;
 		}
-		//move child windows
+		xpos = (ezWnd->Width - tlen) / 2;
+		ypos = (ezWnd->Height - tlen) / 2;
 
+		//move child windows
 		for (int py = 0; py < BlkNum; py++)
 			for (int px = 0; px < BlkNum; px++)
 				MoveEZWindow(BlkWnd[py][px],
 					xpos + px * blocklen,
 					ypos + py * blocklen,
-					blocklen,
-					blocklen, 0);
+					blocklen, blocklen, 0);
 		return 0;
 	}
 		
@@ -160,7 +127,7 @@ EZWNDPROC GameProc(EZWND ezWnd, int message, WPARAM wParam, LPARAM lParam)
 
 EZWNDPROC ControlPanelProc(EZWND ezWnd, int message, WPARAM wParam, LPARAM lParam)
 {
-	static EZWND StartBtn, PauseBtn, EndBtn;
+	static EZWND StartBtn, PauseResumeBtn, EndBtn;
 	switch (message)
 	{
 	case EZWM_CREATE:
@@ -168,9 +135,9 @@ EZWNDPROC ControlPanelProc(EZWND ezWnd, int message, WPARAM wParam, LPARAM lPara
 		StartBtn = CreateEZStyleWindow(ezWnd, TEXT("Start Game"), EZS_CHILD | EZS_BUTTON | EZBS_PUSHBUTTON, 0, 0, 0, 0);
 		EZSendMessage(StartBtn, EZWM_SETFONT, 0, &FontForm);
 		EZSendMessage(StartBtn, EZWM_SETCOLOR, RGB(0, 0, 0), RGB(0, 0, 0));
-		PauseBtn = CreateEZStyleWindow(ezWnd, TEXT("Pause"), EZS_CHILD | EZS_BUTTON | EZBS_PUSHBUTTON, 0, 0, 0, 0);
-		EZSendMessage(PauseBtn, EZWM_SETFONT, 0, &FontForm);
-		EZSendMessage(PauseBtn, EZWM_SETCOLOR, RGB(0, 0, 0), RGB(0, 0, 0));
+		PauseResumeBtn = CreateEZStyleWindow(ezWnd, TEXT("Pause"), EZS_CHILD | EZS_BUTTON | EZBS_PUSHBUTTON, 0, 0, 0, 0);
+		EZSendMessage(PauseResumeBtn, EZWM_SETFONT, 0, &FontForm);
+		EZSendMessage(PauseResumeBtn, EZWM_SETCOLOR, RGB(0, 0, 0), RGB(0, 0, 0));
 		EndBtn = CreateEZStyleWindow(ezWnd, TEXT("End Game"), EZS_CHILD | EZS_BUTTON | EZBS_PUSHBUTTON, 0, 0, 0, 0);
 		EZSendMessage(EndBtn, EZWM_SETFONT, 0, &FontForm);
 		EZSendMessage(EndBtn, EZWM_SETCOLOR, RGB(0, 0, 0), RGB(0, 0, 0));
@@ -178,18 +145,22 @@ EZWNDPROC ControlPanelProc(EZWND ezWnd, int message, WPARAM wParam, LPARAM lPara
 	case EZWM_COMMAND:
 		if (lParam == StartBtn)
 		{
+			EZSendMessage(GameWnd, EZWM_USER_NOTIFY, 1, 0);
 		}
-		else if (lParam == PauseBtn)
+		else if (lParam == PauseResumeBtn)
 		{
+			//TODO: switch the button name
+			EZSendMessage(GameWnd, EZWM_USER_NOTIFY, 2, 0);
 		}
 		else if (lParam == EndBtn)
 		{
+			EZSendMessage(GameWnd, EZWM_USER_NOTIFY, 3, 0);
 		}
 
 		return 0;
 	case EZWM_SIZE:
 		MoveEZWindow(StartBtn, (ezWnd->Width - 100) / 2, 40 , 120, 49, 0);
-		MoveEZWindow(PauseBtn, (ezWnd->Width - 100) / 2, 110, 120, 49, 0);
+		MoveEZWindow(PauseResumeBtn, (ezWnd->Width - 100) / 2, 110, 120, 49, 0);
 		MoveEZWindow(EndBtn  , (ezWnd->Width - 100) / 2, 180, 120, 49, 0);
 		return 0;
 	}
@@ -255,6 +226,17 @@ EZWNDPROC BlockProc(EZWND ezWnd, int message, WPARAM wParam, LPARAM lParam)
 			//brick
 			PaintBrick(wParam, ezWnd->Width, ezWnd->Height);
 			break;
+		case 2:
+			//snake
+			if (SnakeHead->x == px && SnakeHead->y == py)
+			{
+				PaintSnakeHead(wParam, ezWnd->Width, ezWnd->Height);
+			}
+			else
+			{
+				PaintSnakeBody(wParam, ezWnd->Width, ezWnd->Height);
+			}
+			break;
 		}
 		return 0;
 	}
@@ -310,4 +292,30 @@ int PaintBrick(HDC hdc, int x, int y)
 	DeleteObject(hBrush);
 	return 0;
 }
+
+
+int PaintSnakeBody(HDC hdc, int x, int y)
+{
+	HBRUSH hBrush = CreateSolidBrush(RGB(51, 51, 255));
+	SelectObject(hdc, hBrush);
+
+	PatBlt(hdc, 0, 0, x, y, PATCOPY);
+
+	DeleteObject(hBrush);
+	return 0;
+}
+
+
+
+int PaintSnakeHead(HDC hdc, int x, int y)
+{
+	HBRUSH hBrush = CreateSolidBrush(RGB(255, 220, 0));
+	SelectObject(hdc, hBrush);
+
+	PatBlt(hdc, 0, 0, x, y, PATCOPY);
+
+	DeleteObject(hBrush);
+	return 0;
+}
+
 
