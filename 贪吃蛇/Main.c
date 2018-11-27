@@ -99,12 +99,12 @@ EZWNDPROC GameProc(EZWND ezWnd, int message, WPARAM wParam, LPARAM lParam)
 		int blocklen;
 		if (ezWnd->Width > ezWnd->Height)
 		{
-			blocklen = (ezWnd->Height - 10) / BlkNum;//length per block
+			blocklen = (ezWnd->Height - 20) / BlkNum;//length per block
 			tlen = blocklen * BlkNum;
 		}
 		else
 		{
-			blocklen = (ezWnd->Width - 10) / BlkNum;//length per block
+			blocklen = (ezWnd->Width - 20) / BlkNum;//length per block
 			tlen = blocklen * BlkNum;
 		}
 		xpos = (ezWnd->Width - tlen) / 2;
