@@ -60,7 +60,14 @@ int Direction;// < 0 - 3 >  ->  <left up right down>
 //Game Engine Functions
 int GameInit();
 int GameStart();
+int GamePause();
+int GameContinue();
+int GameEnd();
 int GameTimer();
+
+
+//Game States
+int GameStates;//0 Not Start yet    1 Playing    2 Pause
 
 
 pSNAKE SnakeAlloc(int x, int y);

@@ -15,6 +15,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	return EZWndMessageLoop();
 }
 
+
+
 EZWNDPROC MainProc(EZWND ezWnd, int message, WPARAM wParam, LPARAM lParam)
 {
 	switch (message)
@@ -54,7 +56,7 @@ EZWNDPROC GameProc(EZWND ezWnd, int message, WPARAM wParam, LPARAM lParam)
 	switch (message)
 	{
 	case EZWM_CREATE:
-		BlkNum = 20;
+		BlkNum = 21;
 		for (int py = 0; py < BlkNum; py++)
 			for (int px = 0; px < BlkNum; px++)
 			{
@@ -63,6 +65,7 @@ EZWNDPROC GameProc(EZWND ezWnd, int message, WPARAM wParam, LPARAM lParam)
 			}
 
 		TimerID = -1;
+		EZCaptureKeyboard(ezWnd);
 		return 0;
 	case EZWM_DRAW:
 		SelectObject(wParam, DefBrush);
@@ -75,23 +78,52 @@ EZWNDPROC GameProc(EZWND ezWnd, int message, WPARAM wParam, LPARAM lParam)
 		{
 		case 1:
 			GameStart();
-			TimerID = SetEZTimer(ezWnd, 1000);
+			
 			break;
 		case 2:
-			//GamePause / Resume
-
+			//GamePause / Continue
+			switch (GameStates)
+			{
+			case 0:
+				break;
+			case 1:
+				GamePause();
+				break;
+			case 2:
+				GameContinue();
+				break;
+			}
 			break;
 		case 3:
-			//GameEnd
+			GameEnd();
+			
+			break;
+		case 101:
+			//SetTimer
+			if (TimerID != -1)
+			{
+				KillEZTimer(ezWnd, TimerID);
+			}
+			TimerID = SetEZTimer(ezWnd, 500);
+			break;
+		case 102:
+			//KillTimer
 			KillEZTimer(ezWnd, TimerID);
 			TimerID = -1;
 			break;
 		}
 		EZRepaint(ezWnd, 0);
 		return 0;
+		
 	case EZWM_TIMER:
-		GameTimer();
-		EZRepaint(ezWnd, 0);
+		if (bQuitMsgBox == 0)
+		{
+			GameTimer();
+			EZRepaint(ezWnd, 0);
+		}
+		return 0;
+	case EZWM_KEYDOWN:
+		MessageBeep(0);
 		return 0;
 	case EZWM_SIZE:
 		//calculate zhe size of each block
@@ -127,7 +159,7 @@ EZWNDPROC GameProc(EZWND ezWnd, int message, WPARAM wParam, LPARAM lParam)
 
 EZWNDPROC ControlPanelProc(EZWND ezWnd, int message, WPARAM wParam, LPARAM lParam)
 {
-	static EZWND StartBtn, PauseResumeBtn, EndBtn;
+	static EZWND StartBtn, PauseContinueBtn, EndBtn;
 	switch (message)
 	{
 	case EZWM_CREATE:
@@ -135,9 +167,9 @@ EZWNDPROC ControlPanelProc(EZWND ezWnd, int message, WPARAM wParam, LPARAM lPara
 		StartBtn = CreateEZStyleWindow(ezWnd, TEXT("Start Game"), EZS_CHILD | EZS_BUTTON | EZBS_PUSHBUTTON, 0, 0, 0, 0);
 		EZSendMessage(StartBtn, EZWM_SETFONT, 0, &FontForm);
 		EZSendMessage(StartBtn, EZWM_SETCOLOR, RGB(0, 0, 0), RGB(0, 0, 0));
-		PauseResumeBtn = CreateEZStyleWindow(ezWnd, TEXT("Pause"), EZS_CHILD | EZS_BUTTON | EZBS_PUSHBUTTON, 0, 0, 0, 0);
-		EZSendMessage(PauseResumeBtn, EZWM_SETFONT, 0, &FontForm);
-		EZSendMessage(PauseResumeBtn, EZWM_SETCOLOR, RGB(0, 0, 0), RGB(0, 0, 0));
+		PauseContinueBtn = CreateEZStyleWindow(ezWnd, TEXT("Pause"), EZS_CHILD | EZS_BUTTON | EZBS_PUSHBUTTON, 0, 0, 0, 0);
+		EZSendMessage(PauseContinueBtn, EZWM_SETFONT, 0, &FontForm);
+		EZSendMessage(PauseContinueBtn, EZWM_SETCOLOR, RGB(0, 0, 0), RGB(0, 0, 0));
 		EndBtn = CreateEZStyleWindow(ezWnd, TEXT("End Game"), EZS_CHILD | EZS_BUTTON | EZBS_PUSHBUTTON, 0, 0, 0, 0);
 		EZSendMessage(EndBtn, EZWM_SETFONT, 0, &FontForm);
 		EZSendMessage(EndBtn, EZWM_SETCOLOR, RGB(0, 0, 0), RGB(0, 0, 0));
@@ -147,10 +179,11 @@ EZWNDPROC ControlPanelProc(EZWND ezWnd, int message, WPARAM wParam, LPARAM lPara
 		{
 			EZSendMessage(GameWnd, EZWM_USER_NOTIFY, 1, 0);
 		}
-		else if (lParam == PauseResumeBtn)
+		else if (lParam == PauseContinueBtn)
 		{
-			//TODO: switch the button name
 			EZSendMessage(GameWnd, EZWM_USER_NOTIFY, 2, 0);
+			EZSendMessage(PauseContinueBtn, EZWM_SETTEXT, GameStates == 2 ? TEXT("Continue") : TEXT("Pause"), 0);
+			EZRepaint(PauseContinueBtn, 0);
 		}
 		else if (lParam == EndBtn)
 		{
@@ -160,7 +193,7 @@ EZWNDPROC ControlPanelProc(EZWND ezWnd, int message, WPARAM wParam, LPARAM lPara
 		return 0;
 	case EZWM_SIZE:
 		MoveEZWindow(StartBtn, (ezWnd->Width - 100) / 2, 40 , 120, 49, 0);
-		MoveEZWindow(PauseResumeBtn, (ezWnd->Width - 100) / 2, 110, 120, 49, 0);
+		MoveEZWindow(PauseContinueBtn, (ezWnd->Width - 100) / 2, 110, 120, 49, 0);
 		MoveEZWindow(EndBtn  , (ezWnd->Width - 100) / 2, 180, 120, 49, 0);
 		return 0;
 	}
@@ -208,7 +241,6 @@ EZWNDPROC QuitMessageBox(EZWND ezWnd, int message, WPARAM wParam, LPARAM lParam)
 }
 
 
-
 EZWNDPROC BlockProc(EZWND ezWnd, int message, WPARAM wParam, LPARAM lParam)
 {
 	int px, py;
@@ -243,6 +275,8 @@ EZWNDPROC BlockProc(EZWND ezWnd, int message, WPARAM wParam, LPARAM lParam)
 	return 0;
 }
 
+
+
 int GDIObjInit()
 {
 	DefBrush = CreateSolidBrush(DefColor);
@@ -266,6 +300,7 @@ int GDIObjInit()
 
 	return 0;
 }
+
 
 int GDIObjClean()
 {
@@ -304,7 +339,6 @@ int PaintSnakeBody(HDC hdc, int x, int y)
 	DeleteObject(hBrush);
 	return 0;
 }
-
 
 
 int PaintSnakeHead(HDC hdc, int x, int y)

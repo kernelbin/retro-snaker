@@ -344,6 +344,7 @@ typedef struct tagezTopWindowExtend
 	EZWND CptMouseWindow;//捕获了鼠标的
 	EZWND MouseOnWnd;//鼠标在上面的
 
+	EZWND CptKbdWindow;//捕获了键盘消息的
 
 	HDC hdcTop;//顶层窗口申请内存使用，其他窗口而言，这只是一个空的句柄。
 
@@ -526,6 +527,8 @@ BOOL EZResetChildPxPy(EZWND ezWnd);
 BOOL ScrollEZWindow(EZWND ezWnd, int x, int y, BOOL bAdd);
 BOOL EZCaptureMouse(EZWND ezWnd);
 BOOL EZReleaseMouse(EZWND ezWnd);
+BOOL EZCaptureKeyboard(EZWND ezWnd);
+BOOL EZReleaseKeyboard(EZWND ezWnd);
 BOOL SetMouseMsgRecvMode(EZWND ezWnd, int Mode);
 BOOL SetShowState(EZWND ezWnd, int State);
 BOOL EZRedraw(EZWND ezWnd);

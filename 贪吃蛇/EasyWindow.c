@@ -105,6 +105,7 @@ EZWND CreateEZParentWindowEx(DWORD EZStyle, int x, int y, int Width, int Height,
 	ezwndParent->TopWndExtend->CptMouseWindow = NULL;//没有的，2333
 	ezwndParent->TopWndExtend->FocusWindow = NULL;
 	ezwndParent->TopWndExtend->MouseOnWnd = NULL;
+	ezwndParent->TopWndExtend->CptKbdWindow = NULL;
 
 
 	ezwndParent->IsTopWindow = TRUE;//是的，是顶层窗口。
@@ -653,6 +654,21 @@ BOOL EZReleaseMouse(EZWND ezWnd)
 
 	return TRUE;
 }
+
+
+BOOL EZCaptureKeyboard(EZWND ezWnd)
+{
+	ezWnd->ezRootParent->TopWndExtend->CptKbdWindow = ezWnd;
+	return 0;
+}
+
+BOOL EZReleaseKeyboard(EZWND ezWnd)
+{
+	ezWnd->ezRootParent->TopWndExtend->CptKbdWindow = NULL;
+	return 0;
+}
+
+
 
 BOOL SetMouseMsgRecvMode(EZWND ezWnd, int Mode)
 {
@@ -1920,22 +1936,35 @@ LRESULT CALLBACK EZParentWndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM 
 	case WM_CHAR:
 	case WM_KEYDOWN:
 	case WM_KEYUP:
+	{
+		EZWND MsgToSend = NULL;
 		if (ezWnd->TopWndExtend->FocusWindow != NULL)
+		{
+			MsgToSend = ezWnd->TopWndExtend->FocusWindow;
+		}
+		if (ezWnd->TopWndExtend->CptKbdWindow != NULL)
+		{
+			MsgToSend = ezWnd->TopWndExtend->CptKbdWindow;
+		}
+
+		if (MsgToSend)
 		{
 			switch (message)
 			{
 			case WM_CHAR:
-				EZSendMessage(ezWnd->TopWndExtend->FocusWindow, EZWM_CHAR, wParam, lParam);
+				EZSendMessage(MsgToSend, EZWM_CHAR, wParam, lParam);
 				return 0;
 			case WM_KEYDOWN:
-				EZSendMessage(ezWnd->TopWndExtend->FocusWindow, EZWM_KEYDOWN, wParam, lParam);
+				EZSendMessage(MsgToSend, EZWM_KEYDOWN, wParam, lParam);
 				return 0;
 			case WM_KEYUP:
-				EZSendMessage(ezWnd->TopWndExtend->FocusWindow, EZWM_KEYUP, wParam, lParam);
+				EZSendMessage(MsgToSend, EZWM_KEYUP, wParam, lParam);
 				return 0;
 			}
-
 		}
+		
+
+	}
 		return 0;
 
 	}
