@@ -32,6 +32,7 @@ EZWNDPROC MainProc(EZWND ezWnd, int message, WPARAM wParam, LPARAM lParam);
 EZWNDPROC ControlPanelProc(EZWND ezWnd, int message, WPARAM wParam, LPARAM lParam);
 EZWNDPROC GameProc(EZWND ezWnd, int message, WPARAM wParam, LPARAM lParam);
 EZWNDPROC QuitMessageBox(EZWND ezWnd, int message, WPARAM wParam, LPARAM lParam);
+EZWNDPROC GameoverMessageBox(EZWND ezWnd, int message, WPARAM wParam, LPARAM lParam);
 
 EZWNDPROC BlockProc(EZWND ezWnd, int message, WPARAM wParam, LPARAM lParam);
 
@@ -55,6 +56,7 @@ pSNAKE SnakeHead, SnakeTail;
 
 int Direction;// < 0 - 3 >  ->  <left up right down>
 
+int ScoreNow;
 
 
 //Game Engine Functions

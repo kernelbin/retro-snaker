@@ -11,7 +11,9 @@ int GameInit()
 {
 	SnakeHead = 0;
 	GameStates = 0;
+	ScoreNow = 0;
 	srand(time(0));
+
 	return 0;
 }
 
@@ -20,7 +22,9 @@ int GameInit()
 int GameStart()
 {
 	GameStates = 1;
-
+	ScoreNow = 0;
+	//Update the score
+	EZSendMessage(ControlWnd, EZWM_USER_NOTIFY, 0, 0);
 	//Clean The Map
 	for (int py = 0; py < BlkNum; py++)
 		for (int px = 0; px < BlkNum; px++)
@@ -97,6 +101,7 @@ int GameTimer()
 		{
 			//Died
 			GameEnd();
+			EZSendMessage(MainWnd, EZWM_USER_NOTIFY, 0, 0);
 			return 0;
 		}
 	}
@@ -104,8 +109,10 @@ int GameTimer()
 	//check food
 	if (Block[py][px] == 3)
 	{
+		ScoreNow++;
 		SnakeAddToHead(px, py);
 		FoodGenerate();
+		EZSendMessage(ControlWnd, EZWM_USER_NOTIFY, 0, 0);
 		return 0;
 	}
 

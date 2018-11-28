@@ -33,6 +33,10 @@ EZWNDPROC MainProc(EZWND ezWnd, int message, WPARAM wParam, LPARAM lParam)
 		MoveEZWindow(GameWnd, 0, 0, ezWnd->Width - 250, ezWnd->Height, 0);
 		MoveEZWindow(ControlWnd, ezWnd->Width - 250, 0, 250, ezWnd->Height, 0);
 		return 0;
+	case EZWM_USER_NOTIFY:
+		EZDialogBox(ezWnd, 0, 0, 460, 200, EZDLG_CENTER | EZDLG_MASK, RGB(0, 0, 0), GameoverMessageBox);
+
+		return 0;
 	case EZWM_CLOSE:
 		if (!bQuitMsgBox)
 		{
@@ -162,7 +166,7 @@ EZWNDPROC GameProc(EZWND ezWnd, int message, WPARAM wParam, LPARAM lParam)
 
 EZWNDPROC ControlPanelProc(EZWND ezWnd, int message, WPARAM wParam, LPARAM lParam)
 {
-	static EZWND StartBtn, PauseContinueBtn, EndBtn;
+	static EZWND StartBtn, PauseContinueBtn, EndBtn, ScoreText;
 	switch (message)
 	{
 	case EZWM_CREATE:
@@ -176,6 +180,19 @@ EZWNDPROC ControlPanelProc(EZWND ezWnd, int message, WPARAM wParam, LPARAM lPara
 		EndBtn = CreateEZStyleWindow(ezWnd, TEXT("End Game"), EZS_CHILD | EZS_BUTTON | EZBS_PUSHBUTTON, 0, 0, 0, 0);
 		EZSendMessage(EndBtn, EZWM_SETFONT, 0, &FontForm);
 		EZSendMessage(EndBtn, EZWM_SETCOLOR, RGB(0, 0, 0), RGB(0, 0, 0));
+
+		FontForm.lfHeight = 30;
+		ScoreText = CreateEZStyleWindow(ezWnd, TEXT("Score: 0"), EZS_CHILD | EZS_STATIC, 0, 0, 0, 0);
+		EZSendMessage(ScoreText, EZWM_SETFONT, 0, &FontForm);
+		return 0;
+	case EZWM_USER_NOTIFY:
+		//Update the score
+	{
+		TCHAR Score[32];
+		wsprintf(Score, TEXT("Score: %d"), ScoreNow);
+		EZSendMessage(ScoreText, EZWM_SETTEXT, Score, 0);
+		EZRepaint(ScoreText, 0);
+	}
 		return 0;
 	case EZWM_COMMAND:
 		if (lParam == StartBtn)
@@ -195,9 +212,10 @@ EZWNDPROC ControlPanelProc(EZWND ezWnd, int message, WPARAM wParam, LPARAM lPara
 
 		return 0;
 	case EZWM_SIZE:
-		MoveEZWindow(StartBtn, (ezWnd->Width - 100) / 2, 40 , 120, 49, 0);
-		MoveEZWindow(PauseContinueBtn, (ezWnd->Width - 100) / 2, 110, 120, 49, 0);
-		MoveEZWindow(EndBtn  , (ezWnd->Width - 100) / 2, 180, 120, 49, 0);
+		MoveEZWindow(StartBtn, (ezWnd->Width - 120) / 2, 40 , 120, 49, 0);
+		MoveEZWindow(PauseContinueBtn, (ezWnd->Width - 120) / 2, 110, 120, 49, 0);
+		MoveEZWindow(EndBtn  , (ezWnd->Width - 120) / 2, 180, 120, 49, 0);
+		MoveEZWindow(ScoreText, (ezWnd->Width - 200) / 2, 300, 200, 60, 0);
 		return 0;
 	}
 	return 0;
@@ -275,6 +293,46 @@ EZWNDPROC BlockProc(EZWND ezWnd, int message, WPARAM wParam, LPARAM lParam)
 		case 3:
 			PaintFood(wParam, ezWnd->Width, ezWnd->Height);
 			break;
+		}
+		return 0;
+	}
+	return 0;
+}
+
+
+EZWNDPROC GameoverMessageBox(EZWND ezWnd, int message, WPARAM wParam, LPARAM lParam)
+{
+	static EZWND BtnYes, BtnNo, StaticText;
+
+	switch (message)
+	{
+	case EZWM_CREATE:
+		BtnYes = CreateEZStyleWindow(ezWnd, TEXT("Yes"), EZS_CHILD | EZS_BUTTON | EZBS_PUSHBUTTON, 85, 105, 74, 26);
+		BtnNo = CreateEZStyleWindow(ezWnd, TEXT("No"), EZS_CHILD | EZS_BUTTON | EZBS_PUSHBUTTON, ezWnd->Width - 74 - 85, 105, 74, 26);
+		StaticText = CreateEZStyleWindow(ezWnd, TEXT("Game over!"), EZS_CHILD | EZS_STATIC, 37, 30, ezWnd->Width - 37 * 2, 32);
+		FontForm.lfHeight = StaticText->Height;
+		EZSendMessage(StaticText, EZWM_SETFONT, 0, &FontForm);
+		//EZSendMessage(StaticText, EZWM_SETCOLOR, RGB(40, 40, 40), RGB(0, 0, 0));
+		FontForm.lfHeight = BtnYes->Height * 0.8;
+		EZSendMessage(BtnYes, EZWM_SETFONT, 0, &FontForm);
+		EZSendMessage(BtnYes, EZWM_SETCOLOR, RGB(40, 40, 40), RGB(0, 0, 0));
+		EZSendMessage(BtnNo, EZWM_SETFONT, 0, &FontForm);
+		EZSendMessage(BtnNo, EZWM_SETCOLOR, RGB(40, 40, 40), RGB(0, 0, 0));
+		return 0;
+	case EZWM_DRAW:
+		//	PatBlt(wParam, 0, 0, ezWnd->Width, ezWnd->Height, BLACKNESS);
+		SelectObject(wParam, DefPen);
+		Rectangle(wParam, 0, 0, ezWnd->Width, ezWnd->Height);
+		return 0;
+	case EZWM_COMMAND:
+		if (lParam == BtnYes)
+		{
+			DestroyEZWindow(MainWnd);
+		}
+		else
+		{
+			bQuitMsgBox = FALSE;
+			EZEndDialog(ezWnd);
 		}
 		return 0;
 	}
