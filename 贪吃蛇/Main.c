@@ -34,8 +34,9 @@ EZWNDPROC MainProc(EZWND ezWnd, int message, WPARAM wParam, LPARAM lParam)
 		MoveEZWindow(ControlWnd, ezWnd->Width - 250, 0, 250, ezWnd->Height, 0);
 		return 0;
 	case EZWM_USER_NOTIFY:
-		EZDialogBox(ezWnd, 0, 0, 460, 200, EZDLG_CENTER | EZDLG_MASK, RGB(0, 0, 0), GameoverMessageBox);
-
+		//EZDialogBox(ezWnd, 0, 0, 460, 200, EZDLG_CENTER | EZDLG_MASK, RGB(0, 0, 0), QuitMessageBox);
+		//There are several bugs in the function above,so i use MessageBox instead
+		MessageBox(NULL, TEXT("Gamr over!"), szAppName, 0);
 		return 0;
 	case EZWM_CLOSE:
 		if (!bQuitMsgBox)
@@ -60,7 +61,7 @@ EZWNDPROC GameProc(EZWND ezWnd, int message, WPARAM wParam, LPARAM lParam)
 	switch (message)
 	{
 	case EZWM_CREATE:
-		BlkNum = 21;
+		BlkNum = 23;
 		for (int py = 0; py < BlkNum; py++)
 			for (int px = 0; px < BlkNum; px++)
 			{
@@ -82,7 +83,7 @@ EZWNDPROC GameProc(EZWND ezWnd, int message, WPARAM wParam, LPARAM lParam)
 		{
 		case 1:
 			GameStart();
-			
+
 			break;
 		case 2:
 			//GamePause / Continue
@@ -100,7 +101,7 @@ EZWNDPROC GameProc(EZWND ezWnd, int message, WPARAM wParam, LPARAM lParam)
 			break;
 		case 3:
 			GameEnd();
-			
+			EZSendMessage(MainWnd, EZWM_USER_NOTIFY, 0, 0);
 			break;
 		case 101:
 			//SetTimer
@@ -118,7 +119,7 @@ EZWNDPROC GameProc(EZWND ezWnd, int message, WPARAM wParam, LPARAM lParam)
 		}
 		EZRepaint(ezWnd, 0);
 		return 0;
-		
+
 	case EZWM_TIMER:
 		if (bQuitMsgBox == 0)
 		{
@@ -127,7 +128,7 @@ EZWNDPROC GameProc(EZWND ezWnd, int message, WPARAM wParam, LPARAM lParam)
 		}
 		return 0;
 	case EZWM_KEYDOWN:
-		if (37<=wParam&&wParam <= 40)//left
+		if (37 <= wParam && wParam <= 40)//left
 		{
 			SnakeResetDirection(wParam - 37);
 		}
@@ -158,7 +159,7 @@ EZWNDPROC GameProc(EZWND ezWnd, int message, WPARAM wParam, LPARAM lParam)
 					blocklen, blocklen, 0);
 		return 0;
 	}
-		
+
 	}
 	return 0;
 }
@@ -193,7 +194,7 @@ EZWNDPROC ControlPanelProc(EZWND ezWnd, int message, WPARAM wParam, LPARAM lPara
 		EZSendMessage(ScoreText, EZWM_SETTEXT, Score, 0);
 		EZRepaint(ScoreText, 0);
 	}
-		return 0;
+	return 0;
 	case EZWM_COMMAND:
 		if (lParam == StartBtn)
 		{
@@ -212,9 +213,9 @@ EZWNDPROC ControlPanelProc(EZWND ezWnd, int message, WPARAM wParam, LPARAM lPara
 
 		return 0;
 	case EZWM_SIZE:
-		MoveEZWindow(StartBtn, (ezWnd->Width - 120) / 2, 40 , 120, 49, 0);
+		MoveEZWindow(StartBtn, (ezWnd->Width - 120) / 2, 40, 120, 49, 0);
 		MoveEZWindow(PauseContinueBtn, (ezWnd->Width - 120) / 2, 110, 120, 49, 0);
-		MoveEZWindow(EndBtn  , (ezWnd->Width - 120) / 2, 180, 120, 49, 0);
+		MoveEZWindow(EndBtn, (ezWnd->Width - 120) / 2, 180, 120, 49, 0);
 		MoveEZWindow(ScoreText, (ezWnd->Width - 200) / 2, 300, 200, 60, 0);
 		return 0;
 	}
@@ -225,13 +226,13 @@ EZWNDPROC ControlPanelProc(EZWND ezWnd, int message, WPARAM wParam, LPARAM lPara
 EZWNDPROC QuitMessageBox(EZWND ezWnd, int message, WPARAM wParam, LPARAM lParam)
 {
 	static EZWND BtnYes, BtnNo, StaticText;
-	
+
 	switch (message)
 	{
 	case EZWM_CREATE:
 		BtnYes = CreateEZStyleWindow(ezWnd, TEXT("Yes"), EZS_CHILD | EZS_BUTTON | EZBS_PUSHBUTTON, 85, 105, 74, 26);
-		BtnNo  = CreateEZStyleWindow(ezWnd, TEXT("No") , EZS_CHILD | EZS_BUTTON | EZBS_PUSHBUTTON, ezWnd->Width-74-85, 105, 74, 26);
-		StaticText = CreateEZStyleWindow(ezWnd, TEXT("Really want to quit ?"), EZS_CHILD | EZS_STATIC, 37, 30, ezWnd->Width-37*2, 32);
+		BtnNo = CreateEZStyleWindow(ezWnd, TEXT("No"), EZS_CHILD | EZS_BUTTON | EZBS_PUSHBUTTON, ezWnd->Width - 74 - 85, 105, 74, 26);
+		StaticText = CreateEZStyleWindow(ezWnd, TEXT("Really want to quit ?"), EZS_CHILD | EZS_STATIC, 37, 30, ezWnd->Width - 37 * 2, 32);
 		FontForm.lfHeight = StaticText->Height;
 		EZSendMessage(StaticText, EZWM_SETFONT, 0, &FontForm);
 		//EZSendMessage(StaticText, EZWM_SETCOLOR, RGB(40, 40, 40), RGB(0, 0, 0));
@@ -242,7 +243,7 @@ EZWNDPROC QuitMessageBox(EZWND ezWnd, int message, WPARAM wParam, LPARAM lParam)
 		EZSendMessage(BtnNo, EZWM_SETCOLOR, RGB(40, 40, 40), RGB(0, 0, 0));
 		return 0;
 	case EZWM_DRAW:
-	//	PatBlt(wParam, 0, 0, ezWnd->Width, ezWnd->Height, BLACKNESS);
+		//	PatBlt(wParam, 0, 0, ezWnd->Width, ezWnd->Height, BLACKNESS);
 		SelectObject(wParam, DefPen);
 		Rectangle(wParam, 0, 0, ezWnd->Width, ezWnd->Height);
 		return 0;
@@ -345,7 +346,7 @@ int GDIObjInit()
 {
 	DefBrush = CreateSolidBrush(DefColor);
 	DefPen = CreatePen(PS_SOLID, 1, DefColor);
-	
+
 
 	FontForm.lfHeight = 0;
 	FontForm.lfWidth = 0;

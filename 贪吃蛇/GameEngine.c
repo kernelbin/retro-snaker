@@ -39,14 +39,14 @@ int GameStart()
 	}
 
 	//Temporary map
-	for (int y = 0; y < BlkNum; y++)
-		Block[y][0] = 1;
+	for (int e = 0; e < BlkNum; e++)
+		Block[e][0] = Block[e][BlkNum - 1] = Block[BlkNum - 1][e] = Block[0][e] = 1;
 
 	//Create The Snake (Temporary)
 	SnakeHead = SnakeTail = SnakeAlloc(3, 3);
 	SnakeAddToHead(3, 4);
 	SnakeAddToHead(3, 5);
-	
+
 	Direction = 2;
 
 
@@ -134,13 +134,13 @@ int SnakeAddToHead(int x, int y)
 }
 
 
-int SnakeMove(int x,int y)
+int SnakeMove(int x, int y)
 {
 	//Get the origin tail of snake ,move it to the head
 	Block[SnakeTail->y][SnakeTail->x] = 0;
 	pSNAKE NewTail = SnakeTail->h;
 	SnakeTail->h->t = 0;
-	
+
 	memset(SnakeTail, 0, sizeof(SNAKE));
 	SnakeTail->x = x;
 	SnakeTail->y = y;
@@ -156,7 +156,7 @@ int SnakeMove(int x,int y)
 
 
 int FoodGenerate()
-{ 
+{
 	int cx, cy;
 	while (Block[cx = rand() % BlkNum][cy = rand() % BlkNum] != 0);
 	Block[cx][cy] = 3;

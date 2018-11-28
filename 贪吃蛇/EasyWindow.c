@@ -1257,6 +1257,11 @@ EZWND EZDialogBox(EZWND ezParent, int x, int y, int w, int h, DWORD Style, COLOR
 
 		}
 		Dialog = CreateEZWindow(ezParent, x, y, w, h, ezWndProc);
+		/*if (ezParent->ezRootParent->TopWndExtend->FocusWindow)
+		{
+			ezParent->ezRootParent->TopWndExtend->FocusWindow = Dialog;
+			Dialog->FocusState = 1;
+		}*/
 		DlgMskHkExtend->Dialog = Dialog;
 		if (bMask)
 		{
@@ -1579,24 +1584,13 @@ LRESULT CALLBACK EZParentWndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM 
 	{
 		if (IsEZWindow(ezWnd->TopWndExtend->CptMouseWindow))
 		{
-			//从这个窗口向上滚，找到这个窗口的坐标
-			EZWND WndNow = ezWnd->TopWndExtend->CptMouseWindow;
-
-			int Countx = 0, County = 0;
-			//只需要把这个窗口（不需要全屏BitBlt）,得到相对父窗口的位置
-			while (!WndNow->IsTopWindow)
-			{
-				//向上推，直到父窗口
-				Countx += WndNow->x + WndNow->ScrollX;
-				County += WndNow->y + WndNow->ScrollY;
-				WndNow = WndNow->ezParent;
-			}
 			ezInsideWndProc(ezWnd->TopWndExtend->CptMouseWindow, EZWM_LBUTTONDOWN, wParam,
-				MAKELPARAM(LOWORD(lParam) - Countx, HIWORD(lParam) - County));
+				MAKELPARAM(GET_X_LPARAM(lParam) - ezWnd->TopWndExtend->CptMouseWindow->px,
+					GET_Y_LPARAM(lParam) - ezWnd->TopWndExtend->CptMouseWindow->py));
 			return 0;
 		}
 		ezInsideWndProc(ezWnd, EZWM_LBUTTONDOWN, wParam,
-			MAKELPARAM(LOWORD(lParam) - ezWnd->ScrollX, HIWORD(lParam) - ezWnd->ScrollY));
+			MAKELPARAM(GET_X_LPARAM(lParam) - ezWnd->ScrollX, GET_Y_LPARAM(lParam) - ezWnd->ScrollY));
 		return 0;
 
 	}
@@ -1605,24 +1599,13 @@ LRESULT CALLBACK EZParentWndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM 
 	{
 		if (IsEZWindow(ezWnd->TopWndExtend->CptMouseWindow))
 		{
-			//从这个窗口向上滚，找到这个窗口的坐标
-			EZWND WndNow = ezWnd->TopWndExtend->CptMouseWindow;
-
-			int Countx = 0, County = 0;
-			//只需要把这个窗口（不需要全屏BitBlt）,得到相对父窗口的位置
-			while (!WndNow->IsTopWindow)
-			{
-				//向上推，直到父窗口
-				Countx += WndNow->x + WndNow->ScrollX;
-				County += WndNow->y + WndNow->ScrollY;
-				WndNow = WndNow->ezParent;
-			}
 			ezInsideWndProc(ezWnd->TopWndExtend->CptMouseWindow, EZWM_LBUTTONUP, wParam,
-				MAKELPARAM(LOWORD(lParam) - Countx, HIWORD(lParam) - County));
+				MAKELPARAM(GET_X_LPARAM(lParam) - ezWnd->TopWndExtend->CptMouseWindow->px,
+					GET_Y_LPARAM(lParam) - ezWnd->TopWndExtend->CptMouseWindow->py));
 			return 0;
 		}
 		ezInsideWndProc(ezWnd, EZWM_LBUTTONUP, wParam,
-			MAKELPARAM(LOWORD(lParam) - ezWnd->ScrollX, HIWORD(lParam) - ezWnd->ScrollY));
+			MAKELPARAM(GET_X_LPARAM(lParam) - ezWnd->ScrollX, GET_Y_LPARAM(lParam) - ezWnd->ScrollY));
 		return 0;
 	}
 
@@ -1630,24 +1613,13 @@ LRESULT CALLBACK EZParentWndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM 
 	{
 		if (IsEZWindow(ezWnd->TopWndExtend->CptMouseWindow))
 		{
-			//从这个窗口向上滚，找到这个窗口的坐标
-			EZWND WndNow = ezWnd->TopWndExtend->CptMouseWindow;
-
-			int Countx = 0, County = 0;
-			//只需要把这个窗口（不需要全屏BitBlt）,得到相对父窗口的位置
-			while (!WndNow->IsTopWindow)
-			{
-				//向上推，直到父窗口
-				Countx += WndNow->x + WndNow->ScrollX;
-				County += WndNow->y + WndNow->ScrollY;
-				WndNow = WndNow->ezParent;
-			}
 			ezInsideWndProc(ezWnd->TopWndExtend->CptMouseWindow, EZWM_RBUTTONDOWN, wParam,
-				MAKELPARAM(LOWORD(lParam) - Countx, HIWORD(lParam) - County));
+				MAKELPARAM(GET_X_LPARAM(lParam) - ezWnd->TopWndExtend->CptMouseWindow->px,
+					GET_Y_LPARAM(lParam) - ezWnd->TopWndExtend->CptMouseWindow->py));
 			return 0;
 		}
 		ezInsideWndProc(ezWnd, EZWM_RBUTTONDOWN, wParam,
-			MAKELPARAM(LOWORD(lParam) - ezWnd->ScrollX, HIWORD(lParam) - ezWnd->ScrollY));
+			MAKELPARAM(GET_X_LPARAM(lParam) - ezWnd->ScrollX, GET_Y_LPARAM(lParam) - ezWnd->ScrollY));
 		return 0;
 
 	}
@@ -1656,24 +1628,13 @@ LRESULT CALLBACK EZParentWndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM 
 	{
 		if (IsEZWindow(ezWnd->TopWndExtend->CptMouseWindow))
 		{
-			//从这个窗口向上滚，找到这个窗口的坐标
-			EZWND WndNow = ezWnd->TopWndExtend->CptMouseWindow;
-
-			int Countx = 0, County = 0;
-			//只需要把这个窗口（不需要全屏BitBlt）,得到相对父窗口的位置
-			while (!WndNow->IsTopWindow)
-			{
-				//向上推，直到父窗口
-				Countx += WndNow->x + WndNow->ScrollX;
-				County += WndNow->y + WndNow->ScrollY;
-				WndNow = WndNow->ezParent;
-			}
 			ezInsideWndProc(ezWnd->TopWndExtend->CptMouseWindow, EZWM_RBUTTONUP, wParam,
-				MAKELPARAM(LOWORD(lParam) - Countx, HIWORD(lParam) - County));
+				MAKELPARAM(GET_X_LPARAM(lParam) - ezWnd->TopWndExtend->CptMouseWindow->px,
+					GET_Y_LPARAM(lParam) - ezWnd->TopWndExtend->CptMouseWindow->py));
 			return 0;
 		}
 		ezInsideWndProc(ezWnd, EZWM_RBUTTONUP, wParam,
-			MAKELPARAM(LOWORD(lParam) - ezWnd->ScrollX, HIWORD(lParam) - ezWnd->ScrollY));
+			MAKELPARAM(GET_X_LPARAM(lParam) - ezWnd->ScrollX, GET_Y_LPARAM(lParam) - ezWnd->ScrollY));
 		return 0;
 
 	}
@@ -1681,7 +1642,7 @@ LRESULT CALLBACK EZParentWndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM 
 	case WM_MOUSEMOVE:
 	{
 		//老鼠在跑来跑去。
-		if (ezWnd->MouseOn == FALSE)
+		if (!ezWnd->TopWndExtend->MouseOnWnd)
 		{
 			//刚刚进来
 
@@ -1694,24 +1655,13 @@ LRESULT CALLBACK EZParentWndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM 
 		}
 		if (IsEZWindow(ezWnd->TopWndExtend->CptMouseWindow))
 		{
-			//从这个窗口向上滚，找到这个窗口的坐标
-			EZWND WndNow = ezWnd->TopWndExtend->CptMouseWindow;
-
-			int Countx = 0, County = 0;
-			//只需要把这个窗口（不需要全屏BitBlt）,得到相对父窗口的位置
-			while (!WndNow->IsTopWindow)
-			{
-				//向上推，直到父窗口
-				Countx += WndNow->x + WndNow->ScrollX;
-				County += WndNow->y + WndNow->ScrollY;
-				WndNow = WndNow->ezParent;
-			}
 			ezInsideWndProc(ezWnd->TopWndExtend->CptMouseWindow, EZWM_MOUSEMOVE, wParam,
-				MAKELPARAM(LOWORD(lParam) - Countx, HIWORD(lParam) - County));
+				MAKELPARAM(GET_X_LPARAM(lParam) - ezWnd->TopWndExtend->CptMouseWindow->px,
+					GET_Y_LPARAM(lParam) - ezWnd->TopWndExtend->CptMouseWindow->py));
 			return 0;
 		}
 		ezInsideWndProc(ezWnd, EZWM_MOUSEMOVE, wParam,
-			MAKELPARAM(LOWORD(lParam) - ezWnd->ScrollX, HIWORD(lParam) - ezWnd->ScrollY));
+			MAKELPARAM(GET_X_LPARAM(lParam) - ezWnd->ScrollX, GET_Y_LPARAM(lParam) - ezWnd->ScrollY));
 		return 0;
 
 	}
