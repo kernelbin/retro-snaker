@@ -65,6 +65,7 @@ int GameContinue();
 int GameEnd();
 int GameTimer();
 
+int SnakeResetDirection(int d);
 
 //Game States
 int GameStates;//0 Not Start yet    1 Playing    2 Pause

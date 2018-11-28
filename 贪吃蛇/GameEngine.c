@@ -11,6 +11,7 @@ int GameInit()
 {
 	SnakeHead = 0;
 	GameStates = 0;
+	srand(time(0));
 	return 0;
 }
 
@@ -43,6 +44,9 @@ int GameStart()
 	SnakeAddToHead(3, 5);
 	
 	Direction = 2;
+
+
+	FoodGenerate();
 
 	//SetTimer
 	EZSendMessage(GameWnd, EZWM_USER_NOTIFY, 101, 0);
@@ -81,15 +85,18 @@ int GameEnd()
 
 int GameTimer()
 {
-	int px = (SnakeHead->x + drctX[Direction]) % BlkNum;
-	int py = (SnakeHead->y + drctY[Direction]) % BlkNum;
+	//Add an extra BlkNum to ensure the answer is positive
+	int px = (SnakeHead->x + drctX[Direction] + BlkNum) % BlkNum;
+	int py = (SnakeHead->y + drctY[Direction] + BlkNum) % BlkNum;
+
+
 	//check block / snake itself
 	if (Block[py][px] == 1 || Block[py][px] == 2)
 	{
 		if (!(px == SnakeTail->x && py == SnakeTail->y))
 		{
 			//Died
-
+			GameEnd();
 			return 0;
 		}
 	}
@@ -97,7 +104,9 @@ int GameTimer()
 	//check food
 	if (Block[py][px] == 3)
 	{
-		
+		SnakeAddToHead(px, py);
+		FoodGenerate();
+		return 0;
 	}
 
 	//just simplly move
@@ -135,6 +144,28 @@ int SnakeMove(int x,int y)
 	SnakeTail = NewTail;
 
 	Block[SnakeHead->y][SnakeHead->x] = 2;
+	return 0;
+}
+
+
+int FoodGenerate()
+{ 
+	int cx, cy;
+	while (Block[cx = rand() % BlkNum][cy = rand() % BlkNum] != 0);
+	Block[cx][cy] = 3;
+	return 0;
+}
+
+
+int SnakeResetDirection(int d)
+{
+	//set the direction of snake
+	if (SnakeHead->x + drctX[d] == SnakeHead->t->x && SnakeHead->y + drctY[d] == SnakeHead->t->y)
+	{
+		return 0;//not accpeted
+	}
+
+	Direction = d;
 	return 0;
 }
 

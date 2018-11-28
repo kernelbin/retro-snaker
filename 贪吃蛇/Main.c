@@ -123,7 +123,10 @@ EZWNDPROC GameProc(EZWND ezWnd, int message, WPARAM wParam, LPARAM lParam)
 		}
 		return 0;
 	case EZWM_KEYDOWN:
-		MessageBeep(0);
+		if (37<=wParam&&wParam <= 40)//left
+		{
+			SnakeResetDirection(wParam - 37);
+		}
 		return 0;
 	case EZWM_SIZE:
 		//calculate zhe size of each block
@@ -269,6 +272,9 @@ EZWNDPROC BlockProc(EZWND ezWnd, int message, WPARAM wParam, LPARAM lParam)
 				PaintSnakeBody(wParam, ezWnd->Width, ezWnd->Height);
 			}
 			break;
+		case 3:
+			PaintFood(wParam, ezWnd->Width, ezWnd->Height);
+			break;
 		}
 		return 0;
 	}
@@ -353,3 +359,13 @@ int PaintSnakeHead(HDC hdc, int x, int y)
 }
 
 
+int PaintFood(HDC hdc, int x, int y)
+{
+	HBRUSH hBrush = CreateSolidBrush(RGB(255, 0, 0));
+	SelectObject(hdc, hBrush);
+
+	PatBlt(hdc, 0, 0, x, y, PATCOPY);
+
+	DeleteObject(hBrush);
+	return 0;
+}
