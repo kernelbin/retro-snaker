@@ -37,7 +37,7 @@ EZWNDPROC MainProc(EZWND ezWnd, int message, WPARAM wParam, LPARAM lParam)
 		if (!bQuitMsgBox)
 		{
 			bQuitMsgBox = TRUE;
-			EZDialogBox(ezWnd, 0, 0, 370, 157, EZDLG_CENTER | EZDLG_MASK, RGB(0, 0, 0), QuitMessageBox);
+			EZDialogBox(ezWnd, 0, 0, 370, 156, EZDLG_CENTER | EZDLG_MASK, RGB(0, 0, 0), QuitMessageBox);
 		}
 		return EZDO_NOT_CLOSE;
 	case EZWM_DESTROY:
