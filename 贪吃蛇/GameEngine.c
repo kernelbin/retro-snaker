@@ -47,7 +47,7 @@ int GameStart()
 	SnakeAddToHead(3, 4);
 	SnakeAddToHead(3, 5);
 
-	Direction = 2;
+	Direction = 3;
 
 
 	FoodGenerate();
