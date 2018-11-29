@@ -123,6 +123,15 @@
   <ItemGroup>
     <ClInclude Include="EasyWindow.h" />
     <ClInclude Include="Global.h" />
+    <ClInclude Include="resource.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="贪吃蛇.rc" />
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="bk.bmp" />
+    <Image Include="flower.bmp" />
+    <Image Include="head.bmp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

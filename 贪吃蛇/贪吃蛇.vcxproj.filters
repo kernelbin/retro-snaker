@@ -32,5 +32,24 @@
     <ClInclude Include="Global.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="resource.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="贪吃蛇.rc">
+      <Filter>资源文件</Filter>
+    </ResourceCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="head.bmp">
+      <Filter>资源文件</Filter>
+    </Image>
+    <Image Include="flower.bmp">
+      <Filter>资源文件</Filter>
+    </Image>
+    <Image Include="bk.bmp">
+      <Filter>资源文件</Filter>
+    </Image>
   </ItemGroup>
 </Project>

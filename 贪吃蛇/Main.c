@@ -1,7 +1,7 @@
 #include<Windows.h>
 #include"EasyWindow.h"
 #include"Global.h"
-
+#include"resource.h"
 
 
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int iCmdShow)
@@ -22,7 +22,7 @@ EZWNDPROC MainProc(EZWND ezWnd, int message, WPARAM wParam, LPARAM lParam)
 	switch (message)
 	{
 	case EZWM_CREATE:
-		GDIObjInit();
+		GDIObjInit(ezWnd->hdc);
 		memset(Block, 0, sizeof(Block));
 		memset(BlkWnd, 0, sizeof(BlkWnd));
 		bQuitMsgBox = FALSE;
@@ -73,8 +73,10 @@ EZWNDPROC GameProc(EZWND ezWnd, int message, WPARAM wParam, LPARAM lParam)
 		EZCaptureKeyboard(ezWnd);
 		return 0;
 	case EZWM_DRAW:
-		SelectObject(wParam, DefBrush);
-		PatBlt(wParam, 0, 0, ezWnd->Width, ezWnd->Height, PATCOPY);
+		//SelectObject(wParam, DefBrush);
+		SetStretchBltMode(wParam, HALFTONE);
+		StretchBlt(wParam, 0, 0, ezWnd->Width, ezWnd->Height, hdcBk, 0, 0, BmpBk.bmWidth, BmpBk.bmHeight,SRCAND);
+		//PatBlt(wParam, 0, 0, ezWnd->Width, ezWnd->Height, PATCOPY);
 		PatBlt(wParam, xpos, ypos, tlen, tlen, WHITENESS);
 		return 0;
 
@@ -109,7 +111,7 @@ EZWNDPROC GameProc(EZWND ezWnd, int message, WPARAM wParam, LPARAM lParam)
 			{
 				KillEZTimer(ezWnd, TimerID);
 			}
-			TimerID = SetEZTimer(ezWnd, 500);
+			TimerID = SetEZTimer(ezWnd, TimerSpace);
 			break;
 		case 102:
 			//KillTimer
@@ -125,6 +127,12 @@ EZWNDPROC GameProc(EZWND ezWnd, int message, WPARAM wParam, LPARAM lParam)
 		{
 			GameTimer();
 			EZRepaint(ezWnd, 0);
+		}
+		if (bResetTimer)
+		{
+			EZSendMessage(ezWnd, EZWM_USER_NOTIFY, 102, 0);
+			EZSendMessage(ezWnd, EZWM_USER_NOTIFY, 101, 0);
+			bResetTimer = FALSE;
 		}
 		return 0;
 	case EZWM_KEYDOWN:
@@ -159,7 +167,8 @@ EZWNDPROC GameProc(EZWND ezWnd, int message, WPARAM wParam, LPARAM lParam)
 					blocklen, blocklen, 0);
 		return 0;
 	}
-
+	case EZWM_DESTROY:
+		if(TimerID!=-1)EZSendMessage(ezWnd, EZWM_USER_NOTIFY, 102, 0);
 	}
 	return 0;
 }
@@ -167,7 +176,7 @@ EZWNDPROC GameProc(EZWND ezWnd, int message, WPARAM wParam, LPARAM lParam)
 
 EZWNDPROC ControlPanelProc(EZWND ezWnd, int message, WPARAM wParam, LPARAM lParam)
 {
-	static EZWND StartBtn, PauseContinueBtn, EndBtn, ScoreText;
+	static EZWND StartBtn, PauseContinueBtn, EndBtn, ScoreText, SpeedScrollBar;
 	switch (message)
 	{
 	case EZWM_CREATE:
@@ -182,18 +191,26 @@ EZWNDPROC ControlPanelProc(EZWND ezWnd, int message, WPARAM wParam, LPARAM lPara
 		EZSendMessage(EndBtn, EZWM_SETFONT, 0, &FontForm);
 		EZSendMessage(EndBtn, EZWM_SETCOLOR, RGB(0, 0, 0), RGB(0, 0, 0));
 
+		SpeedScrollBar = CreateEZStyleWindow(ezWnd, TEXT(""), EZS_CHILD | EZS_CHILD_HSCROLL, 0, 0, 0, 0);
+		
 		FontForm.lfHeight = 30;
 		ScoreText = CreateEZStyleWindow(ezWnd, TEXT("Score: 0"), EZS_CHILD | EZS_STATIC, 0, 0, 0, 0);
 		EZSendMessage(ScoreText, EZWM_SETFONT, 0, &FontForm);
 		return 0;
 	case EZWM_USER_NOTIFY:
 		//Update the score
-	{
+		if(wParam == 0)
+		{
 		TCHAR Score[32];
 		wsprintf(Score, TEXT("Score: %d"), ScoreNow);
 		EZSendMessage(ScoreText, EZWM_SETTEXT, Score, 0);
 		EZRepaint(ScoreText, 0);
-	}
+		}
+		else
+		{
+			EZSendMessage(PauseContinueBtn, EZWM_SETTEXT, GameStates == 2 ? TEXT("Continue") : TEXT("Pause"), 0);
+			EZRepaint(PauseContinueBtn, 0);
+		}
 	return 0;
 	case EZWM_COMMAND:
 		if (lParam == StartBtn)
@@ -212,10 +229,17 @@ EZWNDPROC ControlPanelProc(EZWND ezWnd, int message, WPARAM wParam, LPARAM lPara
 		}
 
 		return 0;
+	case EZWM_SCROLLPOSCHANGE:
+		TimerSpace =1000 /((wParam + 50) / 50);
+		bResetTimer = TRUE;
+		return 0;
 	case EZWM_SIZE:
 		MoveEZWindow(StartBtn, (ezWnd->Width - 120) / 2, 40, 120, 49, 0);
 		MoveEZWindow(PauseContinueBtn, (ezWnd->Width - 120) / 2, 110, 120, 49, 0);
 		MoveEZWindow(EndBtn, (ezWnd->Width - 120) / 2, 180, 120, 49, 0);
+		MoveEZWindow(SpeedScrollBar, (ezWnd->Width - 200) / 2, 250, 200, 17, 0);
+		EZSendMessage(SpeedScrollBar, EZWM_SETSCROLLRANGE,300, 0);
+		EZSendMessage(SpeedScrollBar, EZWM_SETSCROLLPOS, 0, 50);
 		MoveEZWindow(ScoreText, (ezWnd->Width - 200) / 2, 300, 200, 60, 0);
 		return 0;
 	}
@@ -342,7 +366,7 @@ EZWNDPROC GameoverMessageBox(EZWND ezWnd, int message, WPARAM wParam, LPARAM lPa
 
 
 
-int GDIObjInit()
+int GDIObjInit(HDC hdc)
 {
 	DefBrush = CreateSolidBrush(DefColor);
 	DefPen = CreatePen(PS_SOLID, 1, DefColor);
@@ -362,7 +386,20 @@ int GDIObjInit()
 	FontForm.lfPitchAndFamily = 0;
 	lstrcpy(FontForm.lfFaceName, TEXT("Î¢ÈíÑÅºÚ"));
 
+	hBmpHead = LoadBitmap(GetModuleHandle(0), MAKEINTRESOURCE(IDB_BITMAP1));
+	GetObject(hBmpHead, sizeof(BITMAP), &BmpHead);
+	hdcHead = CreateCompatibleDC(hdc);
+	SelectObject(hdcHead, hBmpHead);
 
+	hBmpFood = LoadBitmap(GetModuleHandle(0), MAKEINTRESOURCE(IDB_BITMAP2));
+	GetObject(hBmpFood, sizeof(BITMAP), &BmpFood);
+	hdcFood = CreateCompatibleDC(hdc);
+	SelectObject(hdcFood, hBmpFood);
+
+	hBmpBk = LoadBitmap(GetModuleHandle(0), MAKEINTRESOURCE(IDB_BITMAP3));
+	GetObject(hBmpBk, sizeof(BITMAP), &BmpBk);
+	hdcBk = CreateCompatibleDC(hdc);
+	SelectObject(hdcBk, hBmpBk);
 	return 0;
 }
 
@@ -377,6 +414,15 @@ int GDIObjClean()
 	{
 		DeleteObject(DefPen);
 	}
+
+	if (hdcHead)DeleteDC(hdcHead);
+	if (hBmpHead)DeleteObject(hBmpHead);
+
+	if (hdcFood)DeleteDC(hdcFood);
+	if (hBmpFood)DeleteObject(hBmpFood);
+
+	if (hdcBk)DeleteDC(hdcBk);
+	if (hBmpBk)DeleteObject(hBmpBk);
 	return 0;
 }
 
@@ -384,7 +430,7 @@ int GDIObjClean()
 
 int PaintBrick(HDC hdc, int x, int y)
 {
-	HBRUSH hBrush = CreateSolidBrush(RGB(64, 64, 64));
+	HBRUSH hBrush = CreateSolidBrush(RGB(80, 80, 80));
 	SelectObject(hdc, hBrush);
 
 	PatBlt(hdc, 0, 0, x, y, PATCOPY);
@@ -396,7 +442,7 @@ int PaintBrick(HDC hdc, int x, int y)
 
 int PaintSnakeBody(HDC hdc, int x, int y)
 {
-	HBRUSH hBrush = CreateSolidBrush(RGB(51, 51, 255));
+	HBRUSH hBrush = CreateSolidBrush(RGB(136, 0, 21));
 	SelectObject(hdc, hBrush);
 
 	PatBlt(hdc, 0, 0, x, y, PATCOPY);
@@ -408,23 +454,15 @@ int PaintSnakeBody(HDC hdc, int x, int y)
 
 int PaintSnakeHead(HDC hdc, int x, int y)
 {
-	HBRUSH hBrush = CreateSolidBrush(RGB(255, 220, 0));
-	SelectObject(hdc, hBrush);
-
-	PatBlt(hdc, 0, 0, x, y, PATCOPY);
-
-	DeleteObject(hBrush);
+	SetStretchBltMode(hdc, HALFTONE);
+	StretchBlt(hdc, 0, 0, x, y, hdcHead, 0, 0, BmpHead.bmWidth, BmpHead.bmHeight, SRCCOPY);
 	return 0;
 }
 
 
 int PaintFood(HDC hdc, int x, int y)
 {
-	HBRUSH hBrush = CreateSolidBrush(RGB(255, 0, 0));
-	SelectObject(hdc, hBrush);
-
-	PatBlt(hdc, 0, 0, x, y, PATCOPY);
-
-	DeleteObject(hBrush);
+	SetStretchBltMode(hdc, HALFTONE);
+	StretchBlt(hdc, 0, 0, x, y, hdcFood, 0, 0, BmpFood.bmWidth, BmpFood.bmHeight, SRCCOPY);
 	return 0;
 }

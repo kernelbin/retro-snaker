@@ -14,6 +14,9 @@ int GameInit()
 	ScoreNow = 0;
 	srand(time(0));
 
+	TimerSpace = 1000;
+	bResetTimer = FALSE;
+
 	return 0;
 }
 
@@ -21,6 +24,8 @@ int GameInit()
 
 int GameStart()
 {
+	if (GameStart)GameEnd();
+
 	GameStates = 1;
 	ScoreNow = 0;
 	//Update the score
@@ -78,7 +83,9 @@ int GameContinue()
 
 int GameEnd()
 {
+	
 	GameStates = 0;
+	EZSendMessage(ControlWnd, EZWM_USER_NOTIFY, 1, 0);
 	//KillTimer
 	EZSendMessage(GameWnd, EZWM_USER_NOTIFY, 102, 0);
 

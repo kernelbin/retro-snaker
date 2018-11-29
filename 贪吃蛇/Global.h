@@ -25,6 +25,20 @@ LOGFONT FontForm;
 
 HBRUSH BrickBrush;
 
+HDC hdcHead;
+HBITMAP hBmpHead;
+BITMAP BmpHead;
+
+
+HDC hdcFood;
+HBITMAP hBmpFood;
+BITMAP BmpFood;
+
+
+HDC hdcBk;
+HBITMAP hBmpBk;
+BITMAP BmpBk;
+
 
 
 //Window Proc
@@ -72,6 +86,8 @@ int SnakeResetDirection(int d);
 //Game States
 int GameStates;//0 Not Start yet    1 Playing    2 Pause
 
+int TimerSpace;
+int bResetTimer;
 
 pSNAKE SnakeAlloc(int x, int y);
 
